@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head><title>Insert title here</title></head>
+<body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    //<![CDATA[
+    $(document).ready(function () {
+        var fragment = window.location.hash;
+        var response = getResponse(fragment);
+
+        window.location.hash = '_#';
+        if(response.hasError()) {
+            $("<div>Error trying to obtain user's authorization!</div>").insertBefore('#friends');
+            return;
+        }
+
+
+    });
+
+
+    function getResponse(fragment) {
+
+        var attributes = fragment.slice(1).split('&');
+
+        var response = {};
+
+        $(attributes).each(function(idx, attr){
+            var keyValue = attr.split('=');
+            response[keyValue[0]] = keyValue[1];
+        });
+
+        response.hasError = function () {
+            return !response['access_token'];
+        };
+
+        getFriends(response['access_token'], function (friends) {
+            $(friends).each(function (index, friend) {
+                $('#friends').find('ul').append('<li>' + friend.name + '</li>');
+            });
+        });
+
+        return response;
+    }
+
+    function getFriends(accessToken, callback) {
+        var baseUrl = 'https://graph.facebook.com/v3.0/';
+        var endpoint = 'me/friends';
+        var url = baseUrl + endpoint;
+
+        $.ajax({
+            url: url,
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+                xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+            },
+            success: function (result) {
+                var friends = result.data;
+                callback(friends);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert(textStatus);
+
+                console.log(textStatus);
+            }
+        })
+    }
+
+    //]]>
+</script>
+
+Friends who has also granted client-implicit
+<div id="friends">
+    <ul></ul>
+</div>
+</body>
+</html>
